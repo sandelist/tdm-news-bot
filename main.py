@@ -69,17 +69,22 @@ async def main():
 
     # -- Telegram 通知 --
     bot = telegram.Bot(token=os.environ["TELEGRAM_BOT_TOKEN"])
-
+    
     # 準備文字摘要（只取前 5 條）
     preview_rows = df.head(5)
     text_preview = "\n".join(
         [f"{row['日期時間']}｜{row['標題']}" for _, row in preview_rows.iterrows()]
     )
-
-    bot.send_message(
-        chat_id=os.environ["TELEGRAM_CHAT_ID"],
-        text=f"📢 TDM 報告 {today} 已完成，已上傳 Google Drive。\n\n📄 最新新聞摘要：\n{text_preview}"
-    )
+    
+    # 支援多個 chat_id，用逗號分隔
+    chat_id_raw = os.environ["TELEGRAM_CHAT_ID"]
+    chat_ids = [cid.strip() for cid in chat_id_raw.split(",") if cid.strip()]
+    
+    for chat_id in chat_ids:
+        bot.send_message(
+            chat_id=chat_id,
+            text=f"📢 TDM 報告 {today} 已完成，已上傳 Google Drive。\n\n📄 最新新聞摘要：\n{text_preview}"
+        )
 
 # -------- 執行 -------- #
 if __name__ == "__main__":
