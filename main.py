@@ -1,14 +1,15 @@
 import os
+import json
+import asyncio
 import pandas as pd
 from datetime import datetime
-import asyncio
-import json
+from playwright.async_api import async_playwright
 import telegram
 import gspread
 from google.oauth2.service_account import Credentials
-from playwright.async_api import async_playwright
+from googleapiclient.discovery import build
 
-# --- 爬蟲邏輯 ---
+# -------- 爬蟲邏輯 -------- #
 async def scrape_tdm_with_playwright(pages=3):
     results = []
     async with async_playwright() as p:
@@ -35,27 +36,45 @@ async def scrape_tdm_with_playwright(pages=3):
         await browser.close()
     return pd.DataFrame(results)
 
-# --- 主程式 ---
+# -------- 主程式 -------- #
 async def main():
     df = await scrape_tdm_with_playwright(pages=3)
     today = datetime.today().strftime('%Y-%m-%d')
     filename = f'tdm_image_news_{today}.csv'
     df.to_csv(filename, index=False, encoding='utf-8-sig')
 
-    # --- Google Drive 上傳 ---
+    # -- 授權 Google API --
     credentials_dict = json.loads(os.environ["GDRIVE_CREDENTIAL_JSON"])
     creds = Credentials.from_service_account_info(credentials_dict, scopes=[
         'https://www.googleapis.com/auth/drive',
         'https://www.googleapis.com/auth/spreadsheets',
     ])
+
+    # -- 建立 Google Sheet 並寫入資料 --
     gc = gspread.authorize(creds)
     sh = gc.create(f"TDM報告 {today}")
     worksheet = sh.get_worksheet(0) or sh.sheet1
     worksheet.update([df.columns.values.tolist()] + df.values.tolist())
 
-    # --- Telegram 通知 ---
-    bot = telegram.Bot(token=os.environ["TELEGRAM_BOT_TOKEN"])
-    bot.send_message(chat_id=os.environ["TELEGRAM_CHAT_ID"],
-                     text=f"📢 TDM 報告 {today} 已完成，並上傳 Google Drive。")
+    # -- 將 Sheet 移動到指定資料夾 --
+    drive_service = build('drive', 'v3', credentials=creds)
+    file = drive_service.files().get(fileId=sh.id, fields='parents').execute()
+    previous_parents = ",".join(file.get('parents', []))
 
-asyncio.run(main())
+    drive_service.files().update(
+        fileId=sh.id,
+        addParents='1HI91dW-xtvox4cyjMXrir2C9DEe7FBPD',  # 🔁 這是你的資料夾 ID
+        removeParents=previous_parents,
+        fields='id, parents'
+    ).execute()
+
+    # -- Telegram 通知 --
+    bot = telegram.Bot(token=os.environ["TELEGRAM_BOT_TOKEN"])
+    bot.send_message(
+        chat_id=os.environ["TELEGRAM_CHAT_ID"],
+        text=f"📢 TDM 報告 {today} 已完成，並上傳 Google Drive。"
+    )
+
+# -------- 執行 -------- #
+if __name__ == "__main__":
+    asyncio.run(main())
