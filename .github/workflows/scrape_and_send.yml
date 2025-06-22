@@ -1,38 +1,38 @@
-name: run-script
+name: run-script  # workflow 的名稱，在 GitHub Actions 頁面會顯示
 
 on:
   schedule:
-    - cron: '0 9 * * *'  # 每日 9:00 UTC 執行（澳門時間為下午 5:00）
-  workflow_dispatch:     # 手動執行按鈕
+    - cron: '0 9 * * *'  # 每天 UTC 早上 9 點執行（澳門時間為下午 5 點）
+  workflow_dispatch:     # 允許你手動點按「Run workflow」按鈕來觸發
 
 jobs:
   run:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # 使用最新版 Ubuntu runner
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3  # 下載 repo 裡的所有程式碼
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.10'  # 使用 Python 3.10（你的程式碼也支援）
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install playwright pandas yagmail gspread google-auth telegram
           playwright install chromium
+          # 安裝所有你 Python 腳本需要的套件（含 Playwright）
 
       - name: Add service account credentials
         run: |
           echo "${{ secrets.GDRIVE_CREDENTIAL_JSON }}" > creds.json
+          # 將你的 Google Drive 憑證寫成檔案，以供 main.py 使用
 
       - name: Run scraper and send report
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-          EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
           GDRIVE_CREDENTIAL_JSON: ${{ secrets.GDRIVE_CREDENTIAL_JSON }}
-        run: python main.py
+        run: python main.py  # 執行主程式
