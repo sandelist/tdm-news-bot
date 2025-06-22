@@ -60,19 +60,25 @@ async def main():
     drive_service = build('drive', 'v3', credentials=creds)
     file = drive_service.files().get(fileId=sh.id, fields='parents').execute()
     previous_parents = ",".join(file.get('parents', []))
-
     drive_service.files().update(
         fileId=sh.id,
-        addParents='1HI91dW-xtvox4cyjMXrir2C9DEe7FBPD',  # 🔁 這是你的資料夾 ID
+        addParents='1HI91dW-xtvox4cyjMXrir2C9DEe7FBPD',
         removeParents=previous_parents,
         fields='id, parents'
     ).execute()
 
     # -- Telegram 通知 --
     bot = telegram.Bot(token=os.environ["TELEGRAM_BOT_TOKEN"])
+
+    # 準備文字摘要（只取前 5 條）
+    preview_rows = df.head(5)
+    text_preview = "\n".join(
+        [f"{row['日期時間']}｜{row['標題']}" for _, row in preview_rows.iterrows()]
+    )
+
     bot.send_message(
         chat_id=os.environ["TELEGRAM_CHAT_ID"],
-        text=f"📢 TDM 報告 {today} 已完成，並上傳 Google Drive。"
+        text=f"📢 TDM 報告 {today} 已完成，已上傳 Google Drive。\n\n📄 最新新聞摘要：\n{text_preview}"
     )
 
 # -------- 執行 -------- #
