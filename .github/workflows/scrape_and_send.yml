@@ -2,7 +2,7 @@ name: run-script  # Workflow 名稱，GitHub Actions 頁面上會顯示
 
 on:
   schedule:
-    - cron: '0 7 * * *'   # 每天 UTC 06:30 執行，相當於澳門時間 14:30
+    - cron: '30 7 * * *'   # Macau 15:30
   workflow_dispatch:      # 支援手動觸發
 
 jobs:
