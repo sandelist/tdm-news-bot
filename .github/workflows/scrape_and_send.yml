@@ -33,4 +33,4 @@ jobs:
         run: echo "${{ secrets.GDRIVE_CREDENTIAL_JSON }}" > service_account.json
 
       - name: Run scraper and send report
-        run: python ${{ github.workspace }}/main.py
+        run: python main.py
