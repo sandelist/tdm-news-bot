@@ -33,4 +33,8 @@ jobs:
         run: echo "${{ secrets.GDRIVE_CREDENTIAL_JSON }}" > service_account.json
 
       - name: Run scraper and send report
-        run: python main.py
+        run: |
+          cd tdm-news-bot
+          python main.py
+
+
