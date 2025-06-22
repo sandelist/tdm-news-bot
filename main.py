@@ -76,6 +76,9 @@ async def main():
         [f"{row['日期時間']}｜{row['標題']}" for _, row in preview_rows.iterrows()]
     )
     
+    # Google Sheet 連結
+    sheet_url = f"https://docs.google.com/spreadsheets/d/{sh.id}"
+    
     # 支援多個 chat_id，用逗號分隔
     chat_id_raw = os.environ["TELEGRAM_CHAT_ID"]
     chat_ids = [cid.strip() for cid in chat_id_raw.split(",") if cid.strip()]
@@ -83,7 +86,11 @@ async def main():
     for chat_id in chat_ids:
         bot.send_message(
             chat_id=chat_id,
-            text=f"📢 TDM 報告 {today} 已完成，已上傳 Google Drive。\n\n📄 最新新聞摘要：\n{text_preview}"
+            text=(
+                f"📢 TDM 報告 {today} 已完成，已上傳 Google Drive。\n"
+                f"🔗 查看完整報告：{sheet_url}\n\n"
+                f"📄 最新5條新聞：\n{text_preview}"
+            )
         )
 
 # -------- 執行 -------- #
