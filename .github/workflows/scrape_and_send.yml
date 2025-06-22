@@ -3,7 +3,7 @@ name: Scrape and Send Report
 on:
   schedule:
     - cron: '0 1 * * *'  # 每天 09:00 澳門時間
-  workflow_dispatch:
+  workflow_dispatch:      # 允許手動觸發
 
 jobs:
   run-script:
@@ -34,5 +34,3 @@ jobs:
 
       - name: Run scraper and send report
         run: python main.py
-
-
